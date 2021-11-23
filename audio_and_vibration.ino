@@ -12,7 +12,6 @@
 MPU9250_asukiaaa mySensor;
 arduinoFFT FFT = arduinoFFT();
 
-float aX, aY, aZ;
 double vRealAcc[SAMPLES];
 double vImagAcc[SAMPLES];
 
@@ -53,7 +52,6 @@ void loop() {
 
     if (mySensor.accelUpdate() == 0) {
     vRealAcc[i] = mySensor.accelX() + mySensor.accelY() + mySensor.accelZ();
-    //Serial.println(String(vRealAcc[i]));
     } else {
       vRealAcc[i] = 0.0;
     }
@@ -64,11 +62,13 @@ void loop() {
   double VibrationMajorPeak = fft(vRealAcc, vImagAcc);
   double AudioMajorPeak = fft(vRealAudio, vImagAudio);
   
+  // Print out how dominant each frequency (vibration) 
   for (int i = 1; i < SAMPLES/2; i++) {
     vRealAcc[i] = vRealAcc[i] / 8;
     Serial.print((String)((i * 1.0 * SAMPLING_FREQUENCY) / SAMPLES)+"Hz ");
     Serial.println(vRealAcc[i], 2);
   }
+  
   Serial.println("Vibration major peak: "+String(VibrationMajorPeak/8)+" Hz");
   Serial.println("Audio major peak: "+String(AudioMajorPeak/8)+"Hz");
   delay(3000);
