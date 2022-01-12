@@ -1,6 +1,9 @@
 #pragma region "includes"
 #include <MPU9250_asukiaaa.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 #include "arduinoFFT.h"
+#include "credentials.h"
 #pragma endregion
 
 #pragma region "defines"
@@ -11,6 +14,18 @@
 #pragma region "variables"
 MPU9250_asukiaaa mySensor;
 arduinoFFT FFT = arduinoFFT();
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+const char ssid[] = WIFI_SSID;
+const char password[] = WIFI_PASSWORD;
+
+const char mqtt_server[] = MQTT_SERVER;
+const int mqtt_port = MQTT_PORT;
+const char mqtt_user[] = MQTT_USER;
+const char mqtt_password[] = MQTT_PASSWORD;
+
+const char client_id[] = CLIENT_ID;
 
 double vRealAcc[SAMPLES];
 double vImagAcc[SAMPLES];
@@ -30,8 +45,42 @@ double fft(double *vReal, double *vImag) {
   return FFT.MajorPeak(vReal, SAMPLES, SAMPLING_FREQUENCY);
 }
 
+void sendMessage(double AudioMajorPeak, double VibrationMajorPeak) {
+  String temp = "200,measurement,AudioMajorPeak," + String(AudioMajorPeak) + "\n200,measurement,VibrationMajorPeak," + String(VibrationMajorPeak);
+  char payload[temp.length() + 1];
+  temp.toCharArray(payload, temp.length() + 1);
+  client.publish("s/us", payload);
+  delay(1000);
+}
+
+void connectToMQTT() {
+  while (!client.connected()) {
+     Serial.print("Attempting MQTT connection ...");
+     if (client.connect(client_id, mqtt_user, mqtt_password)) {
+        Serial.println("Connected");
+        client.subscribe("s/us");
+      }
+      else {
+        Serial.print("Failed, rc= ");
+        Serial.print(client.state());
+        Serial.println("Try again in 5 seconds");
+        delay(5000);
+      } 
+    }
+}
+
 void setup() {
   Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi ...");
+  }
+  Serial.println("Connected to WiFi network");
+
+  client.setServer(mqtt_server,  mqtt_port);
+  connectToMQTT();
   
   Wire.begin();
   mySensor.setWire(&Wire);
@@ -71,5 +120,6 @@ void loop() {
   
   Serial.println("Vibration major peak: "+String(VibrationMajorPeak/8)+" Hz");
   Serial.println("Audio major peak: "+String(AudioMajorPeak/8)+"Hz");
+  sendMessage(AudioMajorPeak, VibrationMajorPeak);
   delay(3000);
 }
