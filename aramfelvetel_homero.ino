@@ -33,7 +33,7 @@ long timer;
 long timer2;
 #pragma end
 
-void connectToMQTT() {
+void reconnect() {
   while (!client.connected()) {
      Serial.print("Attempting MQTT connection ...");
      if (client.connect(client_id, mqtt_user, mqtt_password)) {
@@ -98,10 +98,10 @@ void setup() {
     delay(500);
     Serial.println("Connecting to WiFi ...");
   }
-  Serial.println("Connected to WiFi network");
+  Serial.println("Connectced to WiFi network");
 
   client.setServer(mqtt_server,  mqtt_port);
-  connectToMQTT();
+  reconnect();
   
   pinMode(A0,INPUT);
   pinMode(D1,INPUT);
@@ -115,6 +115,7 @@ void setup() {
 // Megnézzük, hogy pozitív félhullámot vizsgálunk-e, és megkeressük a maximum értéket
 // Amint megvan a maximum érték, kiértékeljük a mért eredményt, és kiíratjuk.
 void loop() {
+  client.loop();
   if(millis()-temptime > 1000){
     temptime = millis();
   }
@@ -138,6 +139,7 @@ void loop() {
    }
  }
  if(millis()-timer>1000){
+  reconnect();
   timer=millis();
   Serial.print("IRMS: ");
   Serial.println((String)IRMS+"A");
