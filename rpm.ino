@@ -33,7 +33,7 @@ unsigned long first_interrupt=0;
 unsigned long next_interrupt=0;
 #pragma endregion
 
-void connectToMQTT() {
+void reconnect() {
   while (!client.connected()) {
      Serial.print("Attempting MQTT connection ...");
      if (client.connect(client_id, mqtt_user, mqtt_password)) {
@@ -50,11 +50,11 @@ void connectToMQTT() {
 }
 
 void sendMessage(int rpm) {
-  String temp = "200,measurement,Rpm," + String(rpm);
+  String temp = "200,RPM,rpm," + String(rpm);
   char payload[temp.length() + 1];
   temp.toCharArray(payload, temp.length() + 1);
   client.publish("s/us", payload);
-  delay(1000);
+  delay(100);
 }
 
 int getRPM() {
@@ -90,7 +90,7 @@ void setup() {
   Serial.println("Connected to WiFi network");
 
   client.setServer(mqtt_server,  mqtt_port);
-  connectToMQTT();
+  reconnect();
   
   // Bemenetnek állítjuk be a pint, amelyen érkezik a jel a megszakításhoz
   pinMode(RpmInputPin, INPUT);
@@ -100,7 +100,9 @@ void setup() {
 }
 
 void loop() {
+  client.loop();
   int rpm = getRPM();
+  reconnect();
   sendMessage(rpm);
   Serial.println("RPM: "+(String)rpm);
 }
