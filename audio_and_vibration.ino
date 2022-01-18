@@ -46,14 +46,14 @@ double fft(double *vReal, double *vImag) {
 }
 
 void sendMessage(double AudioMajorPeak, double VibrationMajorPeak) {
-  String temp = "200,measurement,AudioMajorPeak," + String(AudioMajorPeak) + "\n200,measurement,VibrationMajorPeak," + String(VibrationMajorPeak);
+  String temp = "200,MajorPeaks,microphone," + String(AudioMajorPeak/8,2) + "\n200,MajorPeaks,accelerometer," + String(VibrationMajorPeak/8, 2);
   char payload[temp.length() + 1];
   temp.toCharArray(payload, temp.length() + 1);
   client.publish("s/us", payload);
   delay(1000);
 }
 
-void connectToMQTT() {
+void reconnect() {
   while (!client.connected()) {
      Serial.print("Attempting MQTT connection ...");
      if (client.connect(client_id, mqtt_user, mqtt_password)) {
@@ -80,7 +80,7 @@ void setup() {
   Serial.println("Connected to WiFi network");
 
   client.setServer(mqtt_server,  mqtt_port);
-  connectToMQTT();
+  reconnect();
   
   Wire.begin();
   mySensor.setWire(&Wire);
@@ -88,6 +88,7 @@ void setup() {
 }
 
 void loop() {
+  client.loop();
   Serial.flush();
   samplingPeriod = round(1000000*(1.0/SAMPLING_FREQUENCY));
   long startTime = micros();
@@ -120,6 +121,7 @@ void loop() {
   
   Serial.println("Vibration major peak: "+String(VibrationMajorPeak/8)+" Hz");
   Serial.println("Audio major peak: "+String(AudioMajorPeak/8)+"Hz");
+  reconnect();
   sendMessage(AudioMajorPeak, VibrationMajorPeak);
   delay(3000);
 }
