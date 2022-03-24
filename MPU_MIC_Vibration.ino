@@ -106,14 +106,16 @@ void reconnect() {
 void sendMessage(TOP10_Value *List, double majorpeak, String Name) {
   String temp = "";
   for (int i = 0; i < 10; i++) {
-    temp += "200," + Name + ",Top" + String(i + 1) + "Hz," + String(List[i].hz) + "\n" +
-            "200," + Name + ",Top" + String(i + 1) + "Value," + String(List[i].value) + "\n";
+    temp = "200," + Name + ",Top" + String(i+1) + "Hz," + String(List[i].hz) + "\n" +
+            "200," + Name + ",Top" + String(i+1) + "Value," + String(List[i].value) + "\n";
+    char payload[temp.length() + 1];
+    temp.toCharArray(payload, temp.length() + 1);
+    client.publish("s/us", payload);
   }
-  temp += "200," + Name + ",major_peak," + String(majorpeak) + "\n";
+  temp = "200," + Name + ",major_peak," + String(majorpeak);
   char payload[temp.length() + 1];
   temp.toCharArray(payload, temp.length() + 1);
   client.publish("s/us", payload);
-  Serial.println(payload);
 }
 void setup() {
   Serial.begin(115200);
@@ -209,11 +211,6 @@ void loop() {
   }
   sendMessage(Top10_MPU,majorpeak_mpu,"MPUVibration");
   sendMessage(Top10_MIC,majorpeak_mic,"MICVibration");
-  String temp1="200,RPM,rpm,500";
-  char payload[temp1.length() + 1];
-  temp1.toCharArray(payload, temp1.length() + 1);
-  client.publish("s/us", payload);
-  Serial.println(payload);
   delay(5000);
 
 }
