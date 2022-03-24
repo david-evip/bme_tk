@@ -104,13 +104,12 @@ void reconnect() {
     }
 }
 void sendMessage(TOP10_Value *List, double majorpeak, String Name) {
-  String temp;
-  for(int i=0; i<10; i++){
-    if(i>0)
-      temp+="\n";
-    temp+="200,"+Name+",Top"+String(i+1)+"Hz,"+String(List[i].hz)+"\n200,"+Name+",Top"+String(i+1)+"value,"+String(List[i].value);
+  String temp = "";
+  for (int i = 0; i < 10; i++) {
+    temp += "200," + Name + ",Top" + String(i + 1) + "Hz," + String(List[i].hz) + "\n" +
+            "200," + Name + ",Top" + String(i + 1) + "Value," + String(List[i].value) + "\n";
   }
-  temp+="\n200,"+Name+",major_peak,"+String(majorpeak);
+  temp += "200," + Name + ",major_peak," + String(majorpeak) + "\n";
   char payload[temp.length() + 1];
   temp.toCharArray(payload, temp.length() + 1);
   client.publish("s/us", payload);
